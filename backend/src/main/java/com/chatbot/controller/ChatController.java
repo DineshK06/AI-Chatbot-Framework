@@ -1,38 +1,25 @@
-import jdk.jfr.Registered;
+package com.chatbot.controller;
+
+
+import com.chatbot.model.ChatRequest;
+import com.chatbot.model.ChatResponse;
+import com.chatbot.service.ChatbotService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/chat")
 @CrossOrigin(origins = "http://localhost:3000")
 public class ChatController {
 
-    @Autowired
-    private ChatService chatService;
+    private final ChatbotService chatbotService;
 
-    @PostMapping("/add")
-    public ResponseEntity<?> addChat(@RequestBody Chat chat) {
-        chatService.addChat(chat);
-        return ResponseEntity.ok("Chat added successfully");
+    public ChatController(ChatbotService chatbotService) {
+        this.chatbotService = chatbotService;
     }
 
-    @GetMapping("/get")
-    public ResponseEntity<?> getChats() {
-        return ResponseEntity.ok(chatService.getChats());
-    }
-
-    @GetMapping("/get/{id}")
-    public ResponseEntity<?> getChat(@PathVariable Long id) {
-        return ResponseEntity.ok(chatService.getChat(id));
-    }
-
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteChat(@PathVariable Long id) {
-        chatService.deleteChat(id);
-        return ResponseEntity.ok("Chat deleted successfully");
-    }
-
-    @PutMapping("/update")
-    public ResponseEntity<?> updateChat(@RequestBody Chat chat) {
-        chatService.updateChat(chat);
-        return ResponseEntity.ok("Chat updated successfully");
+    @PostMapping
+    public ChatResponse chat(@RequestBody ChatRequest chatRequest) throws JsonProcessingException {
+        return chatbotService.getChatResponse(chatRequest.getMessage());
     }
 }
