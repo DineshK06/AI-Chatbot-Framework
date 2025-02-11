@@ -1,6 +1,8 @@
 package com.chatbot.service;
 
+import com.chatbot.model.ChatMessage;
 import com.chatbot.model.ChatResponse;
+import com.chatbot.repository.ChatMessageRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -16,6 +18,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,9 +30,14 @@ public class ChatbotService {
     private static final Logger logger = LoggerFactory.getLogger(ChatbotService.class);
 
     private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+    private final ChatMessageRepository chatMessageRepository;
     @Value("${openai.api.key}")
     private String apiKey;
 
+    public ChatbotService(ChatMessageRepository chatMessageRepository) {
+        this.chatMessageRepository = chatMessageRepository;
+    }
+    
     @PostConstruct
     public void loadApiKey() {
         Dotenv dotenv = Dotenv.load();
@@ -39,6 +47,7 @@ public class ChatbotService {
 
     public ChatResponse getChatResponse(String message) {
         logger.info("Received message: {}", message);
+        saveChatMessage("user", message);
 
         //Construct OpenAI request payload
         Map<String, Object> requestBody = new HashMap<>();
@@ -69,6 +78,7 @@ public class ChatbotService {
                     objectMapper.convertValue(choices.getFirst().get("message"), new TypeReference<>() {});
             String botResponse = (String) messageMap.get("content");
 
+            saveChatMessage("bot", botResponse);
             logger.info("Bot response: {}", botResponse);
             return new ChatResponse(botResponse);
         } catch (HttpClientErrorException e) {
@@ -84,5 +94,14 @@ public class ChatbotService {
             logger.error("Error occurred while fetching response from OpenAI", e);
             return new ChatResponse("Error occurred while fetching response from OpenAI");
         }
+    }
+
+    private void saveChatMessage(String user, String message) {
+        logger.info("Saving chat message to database");
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setSender(user);
+        chatMessage.setMessage(message);
+        chatMessage.setTimestamp(Instant.now().toString());
+        chatMessageRepository.save(chatMessage);
     }
 }

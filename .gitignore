@@ -24,5 +24,5 @@ target/
 *.war
 
 # Frontend-specific ignores (if missing inside frontend/.gitignore)
-chatbot-ui/node_modules/
-chatbot-ui/build/
+frontend/node_modules/
+frontend/build/

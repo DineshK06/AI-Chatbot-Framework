@@ -3,24 +3,35 @@ import axios from "axios";
 import "./ChatBox.css"
 
 const ChatBox = () => {
-    const [messages, setMessages] = useState(() => {
-        const savedMessages = localStorage.getItem("chatHistory");
-        return savedMessages ? JSON.parse(savedMessages) : [];
-    });
-
+    const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
 
+    const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || "/api";
+
     // Save chat history to local storage
     useEffect(() => {
-        localStorage.setItem("chatHistory", JSON.stringify(messages));
-    }, [messages]);
+        const loadChatHistory = async () => {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/chat/history`);
+                console.log("Chat history loaded: ", response.data);
+                const formattedMessages = response.data.map(msg => ({
+                    text: msg.message, // Ensure correct mapping
+                    sender: msg.sender.toLowerCase(), // Convert "User" / "Bot" to "user" / "bot"
+                }));
+                setMessages(formattedMessages);
+            } catch (error) {
+                console.error("Error fetching chat history: ", error);
+            }
+        };
+        loadChatHistory();
+    }, []);
 
     //Function to handle API call
     const fetchChatResponse = async (userMessage) => {
         setLoading(true);
         try {
-            const response = await axios.post("http://localhost:8080/chat", {
+            const response = await axios.post(`${API_BASE_URL}/chat`, {
                 message: userMessage,
             });
             console.log("Chat response: ", response.data);

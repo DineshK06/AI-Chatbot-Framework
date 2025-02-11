@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.chatbot</groupId>
-	<artifactId>ai-chatbot</artifactId>
+	<artifactId>chatbot</artifactId>
 	<version>1.0.0</version>
 	<name>AI Chatbot</name>
 	<description>Spring Boot AI Chatbot using OpenAI API</description>
