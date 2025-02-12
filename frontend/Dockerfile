@@ -21,7 +21,7 @@ WORKDIR /usr/share/nginx/html
 # Remove default Nginx static assets
 RUN rm -rf ./*
 
-RUN echo "window.REACT_APP_BACKEND_URL=\"$REACT_APP_BACKEND_URL\";" > /usr/share/nginx/html/env.js
+RUN echo "window.REACT_APP_BACKEND_URL='http://backend:8080';" > /usr/share/nginx/html/env.js
 
 # Copy build output from Stage 1
 COPY build/ .
