@@ -17,6 +17,7 @@ public class SecurityConfig {
                 authorizeRequests
                         .requestMatchers("/chat").permitAll()
                         .requestMatchers("/chat/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
             );
         return http.build();
