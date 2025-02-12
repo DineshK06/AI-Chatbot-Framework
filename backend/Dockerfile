@@ -7,7 +7,9 @@ WORKDIR /app
 # Copy the application JAR file
 COPY target/chatbot-1.0.0.jar chatbot.jar
 
-COPY .env .env
+# Pass API Key as an ARG (to avoid storing it inside the image)
+ARG OPENAI_API_KEY
+ENV OPENAI_API_KEY=${OPENAI_API_KEY}
 
 # Expose port
 EXPOSE 8080

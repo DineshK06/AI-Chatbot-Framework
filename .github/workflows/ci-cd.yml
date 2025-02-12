@@ -1,9 +1,9 @@
 name: CI/CD Pipeline
 
 on:
-    push:
-        branches:
-        - main
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up JDK 23
         uses: actions/setup-java@v2
@@ -19,17 +19,42 @@ jobs:
           distribution: 'temurin'
           java-version: '23'
 
+      - name: Install Minikube & Kubectl
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y curl wget
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          minikube start --driver=docker
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          sudo install kubectl /usr/local/bin/kubectl
+
+      - name: Set up environment variables
+        run: echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+
       - name: Build Backend
         run: |
           cd backend
           mvn clean package -DskipTests
-          docker build -t backend .
+          docker build --build-arg OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} -t backend .
 
       - name: Build Frontend
         run: |
           cd frontend
           npm install
+          npm run build
           docker build -t frontend .
+
+      - name: Push Docker Images to DockerHub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          docker tag backend $DOCKER_USERNAME/backend
+          docker tag frontend $DOCKER_USERNAME/frontend
+          docker push $DOCKER_USERNAME/backend
+          docker push $DOCKER_USERNAME/frontend
 
       - name: Deploy to Kubernetes
         run: |
